@@ -65,7 +65,6 @@ class Hammer {
   static expressMiddleware (_instance) {
     return (req, res, next) => {
       console.log(TAG, "Middleware Initialized")
-      console.log(_instance)
       next()
     }
   }
