@@ -5,8 +5,11 @@ const http = require("http")
 const port = 10000
 const ejs = require("ejs")
 
+const app = express()
+
 // Configure with options.
 const hammer = new Hammer({
+  app: app,
   viewerAcquisition: (req) => {
     return new Promise (function (resolve, reject) {
       // reject(new Error("Nobody here."))
@@ -17,8 +20,6 @@ const hammer = new Hammer({
     res.end("nope")
   }
 })
-
-const app = express()
 
 app.set('view engine', 'ejs')
 

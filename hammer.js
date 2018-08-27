@@ -3,7 +3,8 @@ const default_options = {
   errorsDirectory: `${__dirname}/errors/`,
   viewsDirectory: `${__dirname}/views/`,
   viewerAcquisition: null,
-  viewerAcquisitionFailed: null
+  viewerAcquisitionFailed: null,
+  app: null
 }
 
 const fs = require("fs")
@@ -17,12 +18,23 @@ class Hammer {
   constructor (options) {
     // this.options = Object.assign(default_options, options)
     this.options = default_options
+
     Object.keys(default_options).forEach(key => {
       if (options.hasOwnProperty(key)) {
         this.options[key] = options[key]
         console.log(TAG, "Set", key)
       }
     })
+
+    let errors = {}
+    let errorsDirectory = `${this.options.errorsDirectory}`
+
+    fs.readdirSync(errorsDirectory).filter(dir => dir.indexOf(".js") > -1).forEach(errfile => {
+      errors[path.basename(errfile, ".js")] = require(`${errorsDirectory}${errfile}`)
+      console.log("Loaded",`${errorsDirectory}${errfile}`) 
+    })
+
+    global['Errors'] = errors
 
     const libDir = `${__dirname}/lib/`
     fs.readdirSync(libDir).filter(file => ".js").forEach(file => {
@@ -42,6 +54,12 @@ class Hammer {
         this.options[name] = obj
       }
     })
+
+    if (!options.hasOwnProperty("app")) {
+      log.w(TAG, new Errors.HammerRequiresError())
+      process.exit(1)
+    }
+
   }
 
   static expressMiddleware (_instance) {
@@ -94,12 +112,16 @@ class Hammer {
           view += ".ejs"
         }
 
+        let consumerLayoutPath = `${_instance.options.app.get("views")}/${_locals.layout}`
         let layoutPath = `${_instance.options.viewsDirectory}${_locals.layout}`
+
+        let consumerViewPath = `${_instance.options.app.get("views")}/${view}`
+        let viewPath = `${_instance.options.viewsDirectory}${view}`
+
         if (!fs.existsSync(layoutPath)) {
           return res.end("Cannot find layout. " + layoutPath)
         }
 
-        let viewPath = `${_instance.options.viewsDirectory}${view}`
         if (!fs.existsSync(viewPath)) {
           return res.end("Cannot find view. " + viewPath)
         }
@@ -107,12 +129,21 @@ class Hammer {
         _locals.res = res
         _locals.req = req
 
+        let previousViewsPath = _instance.options.app.get("views")
+
+        if (!fs.existsSync(consumerViewPath)) {
+          _instance.options.app.set("views", _instance.options.viewsDirectory)
+        }
         localRender.call(res, view, _locals, (err, str) => {
           if (err) {
             log.w(TAG, err)
           }
           _locals.body = str
+          if (!fs.existsSync(consumerLayoutPath)) {
+            _instance.options.app.set("views", _instance.options.viewsDirectory)
+          }
           localRender.call(res, _locals.layout, _locals, callback)
+          _instance.options.app.set("views", previousViewsPath)
         })
       }
 
@@ -123,17 +154,6 @@ class Hammer {
 
   // Handles typed errors
   static errorSupport (_instance) {
-    console.log(_instance)
-
-    let errors = {}
-    let errorsDirectory = `${_instance.options.errorsDirectory}`
-
-    fs.readdirSync(errorsDirectory).filter(dir => dir.indexOf(".js") > -1).forEach(errfile => {
-      errors[path.basename(errfile, ".js")] = require(`${errorsDirectory}${errfile}`)
-      console.log("Loaded",`${errorsDirectory}${errfile}`) 
-    })
-
-    global['Errors'] = errors
 
     return (req, res, next) => {
 
