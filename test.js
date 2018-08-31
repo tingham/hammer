@@ -23,12 +23,6 @@ const hammer = new Hammer({
 
 app.set('view engine', 'ejs')
 
-app.use(Hammer.expressMiddleware(hammer))
-app.use(Hammer.errorSupport(hammer))
-app.use(Hammer.layoutSupport(hammer))
-app.use(Hammer.dataSupport(hammer))
-app.use(Hammer.viewerSupport(hammer))
-
 app.route("/not-found")
   .get((req, res) => {
     log.a(TAG, "A")
@@ -57,10 +51,16 @@ app.route("/data")
   .get((req, res) => {
     res.data([{"test": "This is some data."}])
   })
+  .post((req, res) => {
+    res.data([{"test": "This is some post response data."}])
+  })
 
 app.route("/data-error")
   .get((req, res) => {
     res.data(new Errors.NotFoundError())
+  })
+  .post((req, res) => {
+    res.data(new Errors.NotFoundError("POST "))
   })
 
 app.route("/")

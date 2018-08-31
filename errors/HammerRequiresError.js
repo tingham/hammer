@@ -4,7 +4,7 @@ class HammerRequiresError extends Error {
   constructor(...params) {
     super(params)
     this.code = 500
-    this.message = "Hammer requires additional configuration options to complete it's setup."
+    this.message = this.message + " Hammer requires additional configuration options to complete it's setup."
   }
 }
 

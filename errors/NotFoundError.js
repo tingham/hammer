@@ -4,7 +4,7 @@ class NotFoundError extends Error {
   constructor(...params) {
     super(params)
     this.code = 404
-    this.message = "The required resource could not be found."
+    this.message += "The required resource could not be found."
   }
 }
 

@@ -12,10 +12,12 @@ const path = require("path")
 const colors = require("colors")
 const moment = require("moment")
 const _ = require("lodash")
+const express = require("express")
 
 class Hammer {
 
   constructor (options) {
+    this._bag = {}
     // this.options = Object.assign(default_options, options)
     this.options = default_options
 
@@ -55,26 +57,57 @@ class Hammer {
       }
     })
 
+    // About to auto-route some stuff.
     if (!options.hasOwnProperty("app")) {
       log.w(TAG, new Errors.HammerRequiresError())
       process.exit(1)
     }
 
+    this.options.app.use(Hammer.errorSupport(this))
+    this.options.app.use(Hammer.layoutSupport(this))
+    this.options.app.use(Hammer.dataSupport(this))
+    this.options.app.use(Hammer.viewerSupport(this))
+    this.bag()
+
+    log.a(TAG, "Setup Complete", this)
   }
 
-  static expressMiddleware (_instance) {
-    return (req, res, next) => {
-      console.log(TAG, "Middleware Initialized")
-      next()
-    }
+  // Provisions access to the /bag directory for js|css
+  bag () {
+    let bag_router = express.Router()
+    bag_router.get("/:file", (req, res) => {
+      let path = `${__dirname}/client/${req.params.file.replace(/\.js/g, '')}-hammer.js`
+
+      if (this._bag.hasOwnProperty(path)) {
+        return res.end(this._bag[path])
+      }
+
+      if (fs.existsSync(path)) {
+        log.i(TAG, req.params.file, "Exists")
+        fs.readFile(path, 'utf8', (err, data) => {
+          if (err) {
+            log.w(TAG, err)
+          }
+          this._bag[path] = data
+          return res.end(data)
+        })
+      }
+      else {
+        res.handleError(new Errors.NotFoundError())
+      }
+    })
+
+    this.options.app.use("/bag", bag_router)
+    log.a(TAG, "Bag Enabled")
   }
 
   static viewerSupport (_instance) {
+    log.a(TAG, "Viewer Support")
     return (req, res, next) => {
 
       if (_instance.options.viewerAcquisition == null ||
           !req.hasOwnProperty("session")) {
-        log.a(TAG, "No viewerAcquisition or session")
+        log.d(TAG, "No viewerAcquisition or session")
         return next()
       }
 
@@ -94,9 +127,9 @@ class Hammer {
   // Provides support for specifying a locals.layout
   // Provides `present()` method
   static layoutSupport (_instance) {
+    log.a(TAG, "Layout Support")
     return (req, res, next) => {
       const localRender = res.render
-
 
       res.present = function (view, locals, callback) {
         let _locals = Object.assign({}, locals)
@@ -145,18 +178,14 @@ class Hammer {
           _instance.options.app.set("views", previousViewsPath)
         })
       }
-
-      console.log(TAG, "Layout Support Initialized")
       next()
     }
   }
 
   // Handles typed errors
   static errorSupport (_instance) {
-
+    log.a(TAG, "Error Support")
     return (req, res, next) => {
-
-
       res.handleError = (err) => {
         let error_class = Object.keys(Errors).filter(error_class => err instanceof Errors[error_class])
         if (error_class.length == 1) {
@@ -164,8 +193,6 @@ class Hammer {
         }
         return res.status(500).present("500", {err})
       }
-
-      console.log(TAG, "Error Support Initialized")
       next()
     }
   }
@@ -174,6 +201,7 @@ class Hammer {
   // Data can be an instance or an array.
   // Error is singular
   static dataSupport (_instance) {
+    log.a(TAG, "Data Support")
     return (req, res, next) => {
       res.data = (data) => {
         let meta = {}
@@ -181,6 +209,7 @@ class Hammer {
         if (data instanceof Error) {
           meta.response_type = "error"
           data = {
+            name: data.constructor.name,
             code: data.code ? data.code : 0,
             message: data.message
           }
