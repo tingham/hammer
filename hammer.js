@@ -4,7 +4,8 @@ const default_options = {
   viewsDirectory: `${__dirname}/views/`,
   viewerAcquisition: null,
   viewerAcquisitionFailed: null,
-  app: null
+  app: null,
+  log_level: 1
 }
 
 const fs = require("fs")
@@ -107,7 +108,9 @@ class Hammer {
 
       if (_instance.options.viewerAcquisition == null ||
           !req.hasOwnProperty("session")) {
-        log.d(TAG, "No viewerAcquisition or session")
+        if (_instance.log_level > 1) {
+          log.d(TAG, "No viewerAcquisition or session")
+        }
         return next()
       }
 
