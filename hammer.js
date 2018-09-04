@@ -153,11 +153,11 @@ class Hammer {
         let consumerViewPath = `${_instance.options.app.get("views")}/${view}`
         let viewPath = `${_instance.options.viewsDirectory}${view}`
 
-        if (!fs.existsSync(layoutPath)) {
+        if (!fs.existsSync(layoutPath) && !fs.existsSync(consumerLayoutPath)) {
           return res.end("Cannot find layout. " + layoutPath)
         }
 
-        if (!fs.existsSync(viewPath)) {
+        if (!fs.existsSync(viewPath) && !fs.existsSync(consumerViewPath)) {
           return res.end("Cannot find view. " + viewPath)
         }
 
@@ -169,6 +169,7 @@ class Hammer {
         if (!fs.existsSync(consumerViewPath)) {
           _instance.options.app.set("views", _instance.options.viewsDirectory)
         }
+
         localRender.call(res, view, _locals, (err, str) => {
           if (err) {
             log.w(TAG, err)
