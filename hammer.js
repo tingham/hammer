@@ -5,7 +5,8 @@ const default_options = {
   viewerAcquisition: null,
   viewerAcquisitionFailed: null,
   app: null,
-  log_level: 1
+  log_level: 1,
+  template_globals: []
 }
 
 const fs = require("fs")
@@ -52,6 +53,9 @@ class Hammer {
         }
 
         global[name] = obj
+        log.d(TAG, obj)
+
+        this.options.template_globals.push(name)
       }
       else {
         this.options[name] = obj
@@ -163,6 +167,12 @@ class Hammer {
 
         _locals.res = res
         _locals.req = req
+
+        log.i(TAG, _instance.options.template_globals)
+        _instance.options.template_globals.forEach(key => {
+          log.i(TAG, "Assign", key, global[key])
+          _locals[key] = global[key]
+        })
 
         let previousViewsPath = _instance.options.app.get("views")
 
