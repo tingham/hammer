@@ -53,7 +53,6 @@ class Hammer {
         }
 
         global[name] = obj
-        log.d(TAG, obj)
 
         this.options.template_globals.push(name)
       }
@@ -168,9 +167,7 @@ class Hammer {
         _locals.res = res
         _locals.req = req
 
-        log.i(TAG, _instance.options.template_globals)
         _instance.options.template_globals.forEach(key => {
-          log.i(TAG, "Assign", key, global[key])
           _locals[key] = global[key]
         })
 
