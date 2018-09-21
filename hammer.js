@@ -23,9 +23,19 @@ class Hammer {
     // this.options = Object.assign(default_options, options)
     this.options = default_options
 
+    global["moment"] = moment
+
     Object.keys(default_options).forEach(key => {
       if (options.hasOwnProperty(key)) {
-        this.options[key] = options[key]
+        if (key == "template_globals") {
+          options[key].forEach(template_global => {
+            if (this.options[key].indexOf(template_global) < 0) {
+              this.options[key].push(template_global)
+            }
+          })
+        } else {
+          this.options[key] = options[key]
+        }
         console.log(TAG, "Set", key)
       }
     })
@@ -167,7 +177,10 @@ class Hammer {
         _locals.res = res
         _locals.req = req
 
+        log.i(TAG, _instance.options.template_globals)
+
         _instance.options.template_globals.forEach(key => {
+          log.i(TAG, key, global[key])
           _locals[key] = global[key]
         })
 
