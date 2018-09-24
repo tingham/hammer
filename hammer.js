@@ -177,10 +177,7 @@ class Hammer {
         _locals.res = res
         _locals.req = req
 
-        log.i(TAG, _instance.options.template_globals)
-
         _instance.options.template_globals.forEach(key => {
-          log.i(TAG, key, global[key])
           _locals[key] = global[key]
         })
 
@@ -249,6 +246,7 @@ class Hammer {
           meta.content = "object"
         }
 
+        res.header("Content-Type", "application/json")
         return res.json({meta, data})
       }
       next()
