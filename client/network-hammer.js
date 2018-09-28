@@ -6,21 +6,36 @@ define({
     })
   },
 
+  getJson: (url) => {
+    return network.get(url, "application/json")
+  },
+
+  getHtml: (url) => {
+    return network.get(url, "text/html")
+  },
+
+  getText: (url) => {
+    return network.get(url, "text/plain")
+  },
+
   get: (url, type) => {
     return new Promise(function (resolve, reject) {
-      let request = {url}
+      let options = {}
       if (type) {
-        request.contentType = type
+        options.contentType = type
       }
 
-      // Instead of returning the jquery object we resolve|reject a normal promise.
-      $.ajax(request).done(response => {
-        // TODO: maybe unpack it here?
-        if (response.meta.response_type == "error") { 
-          return reject(response)
-        }
-        return resolve(response)
-      })
+      fetch(url, options)
+        .then(response => response.json())
+        .then(packet => {
+          if (packet.meta.response_type == "error") { 
+            return reject(packet)
+          }
+          return resolve(packet)
+        })
+        .catch(e => {
+          reject(e)
+        })
     })
   },
 
