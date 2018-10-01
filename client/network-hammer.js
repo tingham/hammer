@@ -7,55 +7,38 @@ define({
   },
 
   getJson: (url) => {
-    return network.get(url, "application/json")
+    return network.get(url, "application/json").then(response => response.json())
   },
 
   getHtml: (url) => {
-    return network.get(url, "text/html")
+    return network.get(url, "text/html").then(response => response.text())
   },
 
   getText: (url) => {
-    return network.get(url, "text/plain")
+    return network.get(url, "text/plain").then(response => response.text())
   },
 
   get: (url, type) => {
-    return new Promise(function (resolve, reject) {
-      let options = {}
-      if (type) {
-        options.contentType = type
-      }
+    let options = {}
+    if (type) {
+      options.contentType = type
+    }
 
-      fetch(url, options)
-        .then(response => response.json())
-        .then(packet => {
-          if (packet.meta.response_type == "error") { 
-            return reject(packet)
-          }
-          return resolve(packet)
-        })
-        .catch(e => {
-          reject(e)
-        })
-    })
+    return fetch(url, options)
   },
 
-  post:  (url, type, data) => {
-    return new Promise(function (resolve, reject) {
-      let request = {url, data}
-      if (type) {
-        request.contentType = type
-      }
-      request.method = "POST"
+  postJson: (url, body) => {
+    network.post(url, "application/json", body)
+  },
 
-      // Instead of returning the jquery object we resolve|reject a normal promise.
-      $.ajax(request).done(response => {
-        // TODO: maybe unpack it here?
-        if (response.meta.response_type == "error") { 
-          return reject(response)
-        }
-        return resolve(response)
-      })
-    })
+  post:  (url, type, body) => {
+    let options = {data}
+    if (type) {
+      options.headers["Content-Type"] = type
+    }
+    options.method = "POST"
+
+    return fetch(url, options)
   }
 })
 
