@@ -28,15 +28,23 @@ define({
   },
 
   postJson: (url, body) => {
-    network.post(url, "application/json", body)
+    return network.post(url, "application/json", body).then(response => response.json())
   },
 
   post:  (url, type, body) => {
-    let options = {data}
+
+    let options = {
+      body: JSON.stringify(body),
+      headers: {}
+    }
+
     if (type) {
       options.headers["Content-Type"] = type
     }
+
     options.method = "POST"
+
+    console.log("POST", url, options)
 
     return fetch(url, options)
   }
