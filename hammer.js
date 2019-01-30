@@ -20,28 +20,27 @@ class Hammer {
 
   constructor (options) {
     this._bag = {}
-    // this.options = Object.assign(default_options, options)
-    this.options = default_options
+    this.options = Object.assign(default_options, options)
 
-    global["moment"] = moment
-
-    Object.keys(default_options).forEach(key => {
-      if (options.hasOwnProperty(key)) {
-        if (key == "template_globals") {
-          options[key].forEach(template_global => {
-            if (this.options[key].indexOf(template_global) < 0) {
-              this.options[key].push(template_global)
-            }
-          })
-        } else {
-          this.options[key] = options[key]
-        }
-        console.log(TAG, "Set", key)
-      }
-    })
+    // Object.keys(this.options).forEach(key => {
+    //   console.log("Evaluate", key)
+    //   if (this.options.hasOwnProperty(key)) {
+    //     if (key == "template_globals") {
+    //       options[key].forEach(template_global => {
+    //         if (this.options[key].indexOf(template_global) < 0) {
+    //           this.options[key].push(template_global)
+    //         }
+    //       })
+    //     } else {
+    //       this.options[key] = options[key]
+    //     }
+    //     console.log(TAG, "Set", key)
+    //   }
+    // })
 
     let errors = {}
     let errorsDirectory = `${this.options.errorsDirectory}`
+    console.log(errorsDirectory)
 
     fs.readdirSync(errorsDirectory).filter(dir => dir.indexOf(".js") > -1).forEach(errfile => {
       errors[path.basename(errfile, ".js")] = require(`${errorsDirectory}${errfile}`)
@@ -177,9 +176,13 @@ class Hammer {
         _locals.res = res
         _locals.req = req
 
-        _instance.options.template_globals.forEach(key => {
-          _locals[key] = global[key]
-        })
+        // NOTE: Turns out this isn't necessary and all globals are automatically
+        // available in EJS/ Express renders.
+        //
+
+        // _instance.options.template_globals.forEach(key => {
+        //   _locals[key] = global[key]
+        // })
 
         let previousViewsPath = _instance.options.app.get("views")
 
@@ -195,6 +198,7 @@ class Hammer {
           if (!fs.existsSync(consumerLayoutPath)) {
             _instance.options.app.set("views", _instance.options.viewsDirectory)
           }
+
           localRender.call(res, _locals.layout, _locals, callback)
           _instance.options.app.set("views", previousViewsPath)
         })
